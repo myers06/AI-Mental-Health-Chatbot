@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Chatbot</title>
+    <style>
+        :root {
+            --mint: #7DCFB6;
+            --coral: #F79256;
+            --peach: #FBD1A2;
+            --yellow: #F4F1BB;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #0d0d0d;
+            --bg-light: #2a2a2a;
+            --border-color: #333;
+            --text-primary: #fff;
+            --text-secondary: #aaa;
+            --text-muted: #666;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .chatbot-container {
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-darker);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .new-chat-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background-color: transparent;
+            border: 1.5px solid var(--mint);
+            color: var(--mint);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .new-chat-btn:hover {
+            background-color: rgba(125, 207, 182, 0.1);
+        }
+
+        .new-chat-btn:active {
+            transform: scale(0.98);
+        }
+
+        .chats-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .chat-item {
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background-color: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .chat-item:hover {
+            background-color: rgba(125, 207, 182, 0.05);
+        }
+
+        .chat-item.active {
+            background-color: #333;
+            border-color: var(--mint);
+            color: var(--mint);
+        }
+
+        .chat-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .delete-btn:hover {
+            color: var(--coral);
+        }
+
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Main Chat */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-dark);
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 4px;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .welcome-text {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--mint), var(--peach));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtext {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .message {
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .assistant-message {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .user-message .message-content {
+            background-color: var(--mint);
+            color: var(--bg-dark);
+        }
+
+        .assistant-message .message-content {
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .dots {
+            font-size: 18px;
+            letter-spacing: 4px;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 16px 24px 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background-color: var(--bg-light);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-field:focus {
+            border-color: var(--mint);
+        }
+
+        .send-btn {
+            padding: 12px 16px;
+            background-color: var(--mint);
+            border: none;
+            border-radius: 8px;
+            color: var(--bg-dark);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            min-width: 60px;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background-color: #6db8a1;
+            transform: translateY(-2px);
+        }
+
+        .send-btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <button class="new-chat-btn" onclick="createNewChat()">
+                <span>+</span>
+                New chat
+            </button>
+
+            <div class="chats-list" id="chatsList"></div>
+
+            <div class="sidebar-footer">
+                Mental Health Support
+            </div>
+        </div>
+
+        <!-- Main Chat -->
+        <div class="main-chat">
+            <div class="messages-container" id="messagesContainer"></div>
+
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea
+                        id="inputField"
+                        class="input-field"
+                        placeholder="Ask anything..."
+                        onkeydown="handleKeyDown(event)"
+                        oninput="adjustTextarea()"
+                    ></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chats = [{ id: 1, title: 'How to manage stress', messages: [] }];
+        let activeChatId = 1;
+        let loading = false;
+
+        const SUMMER_SUNRISE = {
+            yellow: '#F4F1BB',
+            coral: '#F79256',
+            peach: '#FBD1A2',
+            mint: '#7DCFB6'
+        };
+
+        function getActiveChat() {
+            return chats.find(chat => chat.id === activeChatId);
+        }
+
+        function renderChats() {
+            const chatsList = document.getElementById('chatsList');
+            chatsList.innerHTML = chats.map(chat => `
+                <div class="chat-item ${activeChatId === chat.id ? 'active' : ''}" onclick="setActiveChat(${chat.id})">
+                    <span class="chat-title">${chat.title}</span>
+                    <button class="delete-btn" onclick="deleteChat(event, ${chat.id})">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function renderMessages() {
+            const activeChat = getActiveChat();
+            const messages = activeChat?.messages || [];
+            const container = document.getElementById('messagesContainer');
+
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="welcome-text">What's on your mind today?</div>
+                        <div class="welcome-subtext">Share your thoughts, and I'm here to listen.</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = messages.map(msg => `
+                    <div class="message ${msg.role === 'user' ? 'user-message' : 'assistant-message'}">
+                        <div class="message-content">${escapeHtml(msg.content)}</div>
+                    </div>
+                `).join('');
+
+                if (loading) {
+                    container.innerHTML += `
+                        <div class="message assistant-message">
+                            <div class="message-content">
+                                <span class="dots">●●●</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function createNewChat() {
+            const newId = Math.max(...chats.map(c => c.id), 0) + 1;
+            chats.push({ id: newId, title: 'New conversation', messages: [] });
+            setActiveChat(newId);
+        }
+
+        function setActiveChat(id) {
+            activeChatId = id;
+            renderChats();
+            renderMessages();
+        }
+
+        function deleteChat(event, id) {
+            event.stopPropagation();
+            if (chats.length === 1) {
+                alert('You must have at least one chat');
+                return;
+            }
+            chats = chats.filter(chat => chat.id !== id);
+            if (activeChatId === id) {
+                setActiveChat(chats[0].id);
+            } else {
+                renderChats();
+            }
+        }
+
+        async function sendMessage() {
+            const inputField = document.getElementById('inputField');
+            const message = inputField.value.trim();
+
+            if (!message) return;
+
+            inputField.value = '';
+            adjustTextarea();
+            loading = true;
+
+            const activeChat = getActiveChat();
+            activeChat.messages.push({ role: 'user', content: message });
+
+            if (activeChat.messages.length === 1) {
+                activeChat.title = message.substring(0, 30);
+                renderChats();
+            }
+
+            renderMessages();
+
+            try {
+                const response = await fetch('http://localhost:5000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    activeChat.messages.push({ role: 'assistant', content: data.message });
+                } else {
+                    activeChat.messages.push({ role: 'assistant', content: 'Sorry, there was an error. Please try again.' });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                activeChat.messages.push({
+                    role: 'assistant',
+                    content: 'Could not connect to the server. Make sure your Flask backend is running on localhost:5000.'
+                });
+            } finally {
+                loading = false;
+                renderMessages();
+            }
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function adjustTextarea() {
+            const textarea = document.getElementById('inputField');
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initial render
+        renderChats();
+        renderMessages();
+    </script>
+</body>
+</html>
