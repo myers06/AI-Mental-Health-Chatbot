@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify ,send_file
 from flask_cors import CORS
 from groq import Groq
 import os
@@ -92,17 +92,21 @@ def health():
     """Health check endpoint"""
     return jsonify({"status": "healthy"}), 200
 
-@app.route('/', methods=['GET'])
-def index():
-    """API info endpoint"""
-    return jsonify({
-        "name": "Mental Health Chatbot API",
-        "version": "1.0.0",
-        "endpoints": {
-            "POST /chat": "Send a message to the chatbot",
-            "GET /health": "Health check"
-        }
-    }), 200
+# @app.route('/', methods=['GET'])
+# def index():
+#     """API info endpoint"""
+#     return jsonify({
+#         "name": "Mental Health Chatbot API",
+#         "version": "1.0.0",
+#         "endpoints": {
+#             "POST /chat": "Send a message to the chatbot",
+#             "GET /health": "Health check"
+#         }
+#     }), 200
+    
+@app.route('/')
+def index():                           # FIX: name matches purpose
+    return send_file("index.html")
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
